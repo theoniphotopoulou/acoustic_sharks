@@ -1,18 +1,25 @@
 # Inshore distribution of white sharks
 # Data from Alison Kock
-# Theoni Photopoulou 20161210
+# Ian Durbach and Theoni Photopoulou 20161210
 
-#setwd("/Users/theoniphotopoulou/Dropbox/RESEARCH/20160722_Sharks/Inshore_manuscript")
-setwd("/Users/iandurbach/Documents/Research/161208_AlisonMEPS")
+setwd("/Users/theoniphotopoulou/Dropbox/RESEARCH/20160722_Sharks/20161206_Inshore")
+#setwd("/Users/iandurbach/Documents/Research/161208_AlisonMEPS")
 
 Sys.setenv(TZ='Africa/Johannesburg')
 
 list.files()
-library(dplyr)
 library(plyr)
+library(dplyr)
 library(lubridate)
 library(igraph)
 library(reshape2)
+library(spnet)
+library(sp)
+library(ggmap)
+library(ggplot2)
+library(data.table)
+library(reshape2)
+library(stringr)
 
 options(dplyr.print_max = 1e9)
 
@@ -29,7 +36,7 @@ head(mydata$first_daily_time)
 head(mydata$last_daily_time)
 
 # select a few meaningful columns
-mdf <- mydata[,-c(3,4,7:8,23:27,29:43,45:49)]
+mdf <- mydata[,-c(3,4,6:8,16,19:21,23:25,27,29:33,37:38,41,43,45:49,53,55)]
 head(mdf)
 dim(mdf)
 
@@ -46,11 +53,46 @@ mdf = filter(mdf,!(sitecode=="KBO" & ((year==2006 & month>=10)|(year==2007 & mon
 x <- mdf
 head(x$datetime)
 
+# format datetime object
 mydatetime <- dmy_hms(x$datetime, tz = "UTC"); head(mydatetime)
 mdt <- format(mydatetime, format="%Y-%m-%d %H:%M:%S", tz="Africa/Johannesburg", usetz=T); head(mdt)
 x$datetime <- as.POSIXct(mdt, format="%Y-%m-%d %H:%M:%S", tz="Africa/Johannesburg", usetz=T)
 head(x$datetime)
 typeof(x$datetime)
+
+# get date from datetime object
+mydate <- as.POSIXct(mdt, format="%Y-%m-%d", tz="Africa/Johannesburg", usetz=T)
+head(mydate)
+x$date <- mydate
+
+# reformat datereciverlastdeployed
+mydrld <- ymd(as.character(x$datereciverlastdeployed), tz = "UTC"); head(mydrld)
+drld <- format(mydrld, format="%Y-%m-%d", tz="Africa/Johannesburg", usetz=T); head(drld)
+x$datereciverlastdeployed <- drld
+
+# reformat date_tagged
+mydttg <- ymd(as.character(x$date_tagged), tz = "UTC"); head(mydttg)
+dttg <- format(mydttg, format="%Y-%m-%d", tz="Africa/Johannesburg", usetz=T); head(dttg)
+x$date_tagged <- dttg
+
+# reformat date_last
+mydtl <- ymd(as.character(x$date_last), tz = "UTC"); head(mydtl)
+dtl <- format(mydtl, format="%Y-%m-%d", tz="Africa/Johannesburg", usetz=T); head(dtl)
+x$date_last <- dtl
+
+# reformat time_recorded
+mytr <- as.character(x$time_recorded); head(mytr)
+trposix <- as.POSIXct(mytr, format="%H:%M:%S", tz="UTC"); head(trposix)
+attr(trposix, "tzone") <- "Africa/Johannesburg"; head(trposix)
+# with_tz(trposix, "Africa/Johannesburg") also works
+trlt <- str_split(trposix, " ", 2); head(trlt)
+rectime <- ldply(trlt)[,2]; head(rectime)
+rtht <- hms(as.factor(rectime)); head(rtht)
+rth <- lubridate::hour(rtht); head(rth)
+x$time_recorded <- rectime
+x$hr <- rth
+
+head(x)
 
 x = x[order(x$shark_id, x$datetime, x$sitecode),]
 n = nrow(x)
@@ -66,13 +108,18 @@ y <- x
 y <- y[,c("shark_id","datetime","sitecode","season","month","year","hr","prevtime","timediff","newvisit")]
 head(y)
 
-# seasonal filters
-#ss <- filter(y, season=="Spring" | season=="Summer")
+# seasonal filters - CHOOSE WHICH ONE YOU WANT
+ss <- filter(y, season=="Spring" | season=="Summer")
 #ss <- filter(y, season=="Autumn" | season=="Winter")
-ss <- filter(y, season=="Summer")
+# ss <- filter(y, season=="Summer")
+# ss <- filter(y, season=="Winter")
 ss <- droplevels(ss)
 table(ss$shark_id)
 y <- ss
+
+# table(ss$inshore_island)
+# ssi <- filter(ss, inshore_island=="inshore") # INSHORE DATA ONLY
+# table(ssi$sitecode)
 
 ny = nrow(y)
 y$prevshark = c(-999,y$shark_id[-ny])
@@ -100,16 +147,17 @@ y = y[y$timediff < (60 * Tm) , ]
 ### NOTE: THIS IS NB -- what to do with sharks detected at >1 receiver simultaneously?
 #y = y[(y$exitind*y$enterind)!=1,]
 
-res = y %>% group_by(sitecode,prevsite) %>% dplyr::summarise(count = n(), 
-                                                wt = mean(abs(timediff)),
-                                                nprobs = sum(timediff==0))
+# this creates the table of transitions by counting the number of transitions between sites 
+res = y %>% group_by(sitecode,prevsite) %>% dplyr::summarise(count = n())#, 
+                                                #wt = mean(abs(timediff)),
+                                                #nprobs = sum(timediff==0))
 
 #write.csv(res,"zero-time-diffs.csv")
 
 # create transition matrix
 
 # not all sites appear in both prevsite and sitecode, so to get transition matrix to be
-# square need to make sure all sites appear in both
+# square need to make sure all sites appear in both - this is done in extrabit below
 
 re2 = res
 re2$prevsite = factor(re2$prevsite)
@@ -121,13 +169,15 @@ l2 = levels(re2$sitecode)
 oddonesout = c(setdiff(l1,l2),setdiff(l2,l1))
 
 extrabit = data.frame(prevsite = oddonesout, sitecode = oddonesout, 
-                      count = 0, wt = 0, nprobs = 0)
+                      count = 0)#, wt = 0, nprobs = 0)
 re2 = rbind.data.frame(extrabit,re2)
 
 transmat = dcast(re2, prevsite ~ sitecode, 
                  value.var = "count", drop=F, fill=0)
 
 write.csv(transmat,"receiver_transmat.csv")
+
+# Transition matrix reshaped into long format, to exclude all the zeros 
 
 # remove self-transitions
 receiver_edgelist = re2
