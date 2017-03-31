@@ -143,6 +143,10 @@ y = y[y$newshark!=1,]
 Tm = 720
 y = y[y$timediff < (60 * Tm) , ]
 
+###########
+save(y, file="/Users/theoniphotopoulou/Dropbox/RESEARCH/20160722_Sharks/20161206_Inshore/processed_data.RData")
+###########
+
 # drop if visit only consists of 1 data-point (entry == exit)
 ### NOTE: THIS IS NB -- what to do with sharks detected at >1 receiver simultaneously?
 #y = y[(y$exitind*y$enterind)!=1,]
@@ -151,6 +155,15 @@ y = y[y$timediff < (60 * Tm) , ]
 res = y %>% group_by(sitecode,prevsite) %>% dplyr::summarise(count = n())#, 
                                                 #wt = mean(abs(timediff)),
                                                 #nprobs = sum(timediff==0))
+                                                
+# ttt = y %>%   %>% dplyr::summarise(count = n())#
+# ttt
+# # 1        26    17
+# # 2        27    88
+# # 3        28    18
+# # 4        29    57
+# y29 <- subset(y, shark_id==29)
+# plot.ts(as.factor(y29$sitecode))
 
 #write.csv(res,"zero-time-diffs.csv")
 
