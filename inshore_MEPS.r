@@ -109,8 +109,9 @@ y <- y[,c("shark_id","datetime","sitecode","season","month","year","hr","prevtim
 head(y)
 
 # seasonal filters - CHOOSE WHICH ONE YOU WANT
-ss <- filter(y, season=="Spring" | season=="Summer")
-#ss <- filter(y, season=="Autumn" | season=="Winter")
+ss <- y # no filter, all seasons in
+# ss <- filter(y, season=="Spring" | season=="Summer")
+# ss <- filter(y, season=="Autumn" | season=="Winter")
 # ss <- filter(y, season=="Summer")
 # ss <- filter(y, season=="Winter")
 ss <- droplevels(ss)
