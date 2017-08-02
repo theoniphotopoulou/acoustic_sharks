@@ -1,8 +1,8 @@
 # Constructs plots and tables recording frequency of transitions between 
 # cluster (group of receivers) pairs and visits to each cluster.
 # ----
-# Inputs: receiver_edgelist_<season>.csv (see inshore_MEPS.r) 
-#         siteClusters_latlong.csv (from cluster_grouping.R??)
+# Inputs: receiver_edgelist_<season>.csv (see create_edgelist.r) 
+#         siteClusters_latlong.csv 
 # Outputs: fig_network.png
 #          aggregate_transitions_<season>.csv
 #          aggregate_visits_<season>.csv
