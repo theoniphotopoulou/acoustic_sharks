@@ -209,12 +209,12 @@ summary(zdf$count)
 var(zdf$count)
 hist(zdf$count) 
 # some big counts, mean not equal to variance, straight Poisson won't fit well
-
 pois <- fitdistr(zdf$count, "Poisson")
+# check if the data follow a Poisson distribution
 qqp(zdf$count, "pois", pois$estimate)
-
+# check if the data follow a log-normal distribution
 qqp(zdf$count, "lnorm")
-
+# check if the data follow a Negative Binomial distribution
 nbinom <- fitdistr(zdf$count, "Negative Binomial")
 qqp(zdf$count, "nbinom", size = nbinom$estimate[[1]], mu = nbinom$estimate[[2]])
 
@@ -292,8 +292,9 @@ m0glmdredge <- dredge(m0glm, beta="none", fixed=c("clustcode"), extra = alist(BI
 m0dredge$BIC-min(m0dredge$BIC)
 m0dredge$AICc-min(m0dredge$AICc)
 
+# m7 seems to be the model that fits the data best. the residuals still don't look very good, but the model predictions are close to the observed counts
 #########################
-# compare m1 with and without an offset
+# compare m7 with and without an offset
 # par(mfrow=c(1,2))
 m7summ <- summary(m7) # m1 and m1a
 m7coeff <- m7summ$coefficients
