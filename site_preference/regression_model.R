@@ -2,6 +2,15 @@
 # Data from Alison Kock
 # Theoni Photopoulou & Ian Durbach 20161210
 
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# Use this script after you have processed the data using
+# one of the "grouping" scripts, either 'site_grouping.R',
+# 'cluster_grouping.R' or 'area_grouping.R'.
+# The code below is written for data processed using the 
+# 'cluster_grouping.R' script, for the inshore manuscript 
+# by Kock et al. 2017 
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
 Sys.setenv(TZ='Africa/Johannesburg')
 
 setwd("/Users/theoniphotopoulou/Dropbox/RESEARCH/20160722_Sharks/20161206_Inshore")

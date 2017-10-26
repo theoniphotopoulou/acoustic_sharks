@@ -2,6 +2,11 @@
 # Data from Alison Kock
 # Ian Durbach and Theoni Photopoulou 20161210
 
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# Use this script after you have prepared the data using
+# functions in the 'inshore_data_prep.R' script
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
 library(ggplot2)
 library(ggmap)
 library(plyr)
